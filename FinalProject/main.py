@@ -1,31 +1,22 @@
 # import
 from imageai.Detection import ObjectDetection
 import os
-import cv2
-import cv2 as cv
 import numpy as np
-from imageai.Detection import VideoObjectDetection
-# from shapely.geometry import Point, Polygon
-from matplotlib import pyplot as plt
+import cv2
 
-import numpy as np
-import time
-import cv2
-import imutils
-from imutils.video import FPS
-from imutils.video import VideoStream
 
 IMAGE = False
 VIDEO = True
 
-
 # ---------------------------------------------------------------------
-# function      : inputFromImage
-# Description   : Detection objects from an image, for each object prints
-#                 the details on it At the end shows the image with the detections
+# function      : detectFromImage
+# Description   : Detection objects from an image
 # ---------------------------------------------------------------------
-def inputFromImage(input_path, output_path, detector):
-    execution_path = os.getcwd() + "/output"
+def detectFromImage(input_path, output_path):
+    detector = ObjectDetection()
+    detector.setModelTypeAsYOLOv3()
+    detector.setModelPath("EnvFiles/yolo.h5")
+    detector.loadModel(detection_speed="fast")
     detections = detector.detectObjectsFromImage(input_image=input_path,
                                                  output_image_path=output_path)
     image = cv2.imread(output_path)
@@ -48,9 +39,7 @@ def inputFromImage(input_path, output_path, detector):
 
 # ---------------------------------------------------------------------
 # function      : detectFromVideo
-# Description   : Detection objects from a video, For each frame, a second
-#                 and a minute prints the detection, and save new video
-#                 with the detections
+# Description   : Detection objects from a video
 # ---------------------------------------------------------------------
 def detectFromVideo(input_path):
     OUTPUT_FILE = 'output/videoDetections.avi'
@@ -174,25 +163,14 @@ def detectFromVideo(input_path):
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-    model_path = "EnvFiles/yolo.h5"
     input_path = "input/1.jpeg"
     output_path = "output/out.jpg"
     video_input_path = "input/car.mp4"
 
     if IMAGE:
-        detector = ObjectDetection()
-        detector.setModelTypeAsYOLOv3()
-        detector.setModelPath(model_path)
-        detector.loadModel(detection_speed="fast")
-
-        inputFromImage(input_path, output_path, detector)
+        detectFromImage(input_path, output_path)
 
     elif VIDEO:
-        # detector = VideoObjectDetection()
-        # detector.setModelTypeAsYOLOv3()
-        # detector.setModelPath(model_path)
-        # detector.loadModel(detection_speed="flash")
-
         detectFromVideo(video_input_path)
 
     cv2.waitKey(0)  # Display the image infinitely until any keypress
