@@ -3,11 +3,22 @@ from imageai.Detection import ObjectDetection
 import os
 import numpy as np
 import cv2
-
+from matplotlib.patches import Polygon
 
 IMAGE = False
 VIDEO = True
+pts = Polygon(np.array([[0, 250], [250, 250],
+                [50, 50], [100, 100]],
+               np.int32).reshape((-1, 1, 2)))
+# pts = pts.reshape((-1, 1, 2))
 
+def drawPolygon(img):
+    color = (255, 255, 255)
+    thickness = 2
+    isClosed = True
+    cv2.polylines(img, [pts],
+                  isClosed, color, thickness)
+    return img
 # ---------------------------------------------------------------------
 # function      : detectFromImage
 # Description   : Detection objects from an image
@@ -126,10 +137,6 @@ def detectFromVideo(input_path):
             # loop over the indexes we are keeping
             for i in idxs.flatten():
                 # extract the bounding box coordinates
-                # x = boxes[i][0]
-                # y = boxes[i][1]
-                # w = boxes[i][2]
-                # h = boxes[i][3]
                 (x, y) = (boxes[i][0], boxes[i][1])
                 (w, h) = (boxes[i][2], boxes[i][3])
 
@@ -137,11 +144,15 @@ def detectFromVideo(input_path):
 
                 cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
                 text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-                print("{} detect! {},{},{},{}".format(LABELS[classIDs[i]], boxes[i][0], boxes[i][1], boxes[i][0] + boxes[i][2], boxes[i][1] +boxes[i][3]))
-                cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, color, 2)
+                if pts.contains((x, y)):
+                    print ("IN!")
+                if pts.contains((w, h)):
+                    print("IN!")
+                # print("{} detect! {},{},{},{}".format(LABELS[classIDs[i]], boxes[i][0], boxes[i][1], boxes[i][0] + boxes[i][2], boxes[i][1] +boxes[i][3]))
+                cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
         # show the output image
+        drawPolygon(image)
         cv2.imshow("output", image)
         writer.write(image)
         key = cv2.waitKey(1) & 0xFF
