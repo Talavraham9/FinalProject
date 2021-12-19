@@ -6,7 +6,9 @@ import cv2
 
 IMAGE = False
 VIDEO = True
-CAMERA = True
+CAMERA = False
+
+
 # # ---------------------------------------------------------------------
 # function      : detectFromImage
 # Description   : Detection objects from an image
@@ -41,29 +43,33 @@ def detectFromImage(input_path, output_path):
 # Description   : Detection objects from a video
 # ---------------------------------------------------------------------
 def detectFromVideo():
-    INPUT_FILE = "input/car.mp4"
-    OUTPUT_FILE = 'output/videoDetections.avi'
+    INPUT_FILE = "input/motorcycle.mp4"
+    OUTPUT_FILE = 'output/videoOutput.mp4'
     LABELS_FILE = 'C:/darknet-master/data/coco.names'
-    CONFIG_FILE = 'C:/darknet-master/cfg/yolov3.cfg'
-    WEIGHTS_FILE = 'EnvFiles/yolov3.weights'
-    CONFIDENCE_THRESHOLD = 0.7
+    CONFIG_FILE = 'C:/darknet-master/cfg/yolov3-tiny.cfg'
+    WEIGHTS_FILE = 'EnvFiles/yolov3-tiny.weights'
+    CONFIDENCE_THRESHOLD = 0.5
     LABELS = open(LABELS_FILE).read().strip().split("\n")
-
-    # Output video
-    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-    writer = cv2.VideoWriter(OUTPUT_FILE, fourcc, 30, (800, 600), True)
 
     np.random.seed(4)  # makes the random numbers predictable
     COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")  # Colors of the objects
     net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
+    # net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL) #run on GPU
+
     if CAMERA:
         cap = cv2.VideoCapture((0 + cv2.CAP_DSHOW))  # open camera
     elif VIDEO:
         cap = cv2.VideoCapture(INPUT_FILE)  # open our video
+    # Output video
+    writer = cv2.VideoWriter(OUTPUT_FILE, -1, 20.0, (int(cap.get(3)), int(cap.get(4))))
 
     while True:
         ret, img = cap.read()
+
+
         height, weight, _ = img.shape
+        smallImg = cv2.resize(img, (weight // 2, height // 2), interpolation=cv2.INTER_AREA)
+
         blob = cv2.dnn.blobFromImage(img, 1 / 255, (416, 416), (0, 0, 0), swapRB=True, crop=False)
         net.setInput(blob)
 
@@ -99,10 +105,11 @@ def detectFromVideo():
             color = [int(c) for c in COLORS[class_ids[i]]]
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
             text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
+            print("{} detect".format(LABELS[class_ids[i]]))
             cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
+        writer.write(img) #save output
         cv2.imshow("output", img)  # show the output image
-        writer.write(img)
         if cv2.waitKey(1) & 0xff == ord("q"):
             break
 
@@ -121,7 +128,6 @@ if __name__ == '__main__':
 
     input_path = "input/1.jpeg"
     output_path = "output/out.jpg"
-
 
     if IMAGE:
         detectFromImage(input_path, output_path)
