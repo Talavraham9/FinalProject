@@ -4,8 +4,16 @@ import argparse
 import cv2
 import matplotlib.pyplot as plt
 
-RESIZE_VAL = 2
-path = "input/distance_android.jpeg"
+IPHONE = True
+ANDROID = False
+RESIZE_VAL = 1
+path = "input/distance_iphone.jpeg"
+IPHONE_lower_bound  =np.array([0, 150, 140], np.uint8)
+IPHONE_upper_bound = np.array([10, 255, 255], np.uint8)
+
+ANDROID_lower_bound = np.array([160, 120, 120], np.uint8)
+ANDROID_upper_bound = np.array([180, 255, 255], np.uint8)
+
 
 # ---------------------------------------------------------------------
 # function      : draw_rect
@@ -16,11 +24,10 @@ def draw_rect(contour):
     height, width, channel = img.shape
     for c in contour:
         x, y, w, h = cv2.boundingRect(c)
-        cv2.rectangle(img_copy, (x, y + h), (x + w, y), (255, 255, 255), 2)
         if ( x > width // 2):
-            cv2.circle(img_copy, (x, y+h), radius=3, color=(0, 255,0 ), thickness=-1)
+            cv2.circle(img_copy, (x, y+h), radius=4, color=(0, 255,0 ), thickness=-1)
         elif (x < width // 2):
-            cv2.circle(img_copy, (x+w, y+h), radius=3, color=(0, 255,0 ), thickness=-1)
+            cv2.circle(img_copy, (x+w, y+h), radius=4, color=(0, 255,0 ), thickness=-1)
 
 
 
@@ -40,8 +47,12 @@ if __name__ == '__main__':
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # lower bound and upper bound for Green color
-    lower_bound = np.array([160, 100, 100],np.uint8)
-    upper_bound = np.array([180, 255, 255],np.uint8)
+    if IPHONE:
+        lower_bound = IPHONE_lower_bound
+        upper_bound = IPHONE_upper_bound
+    elif ANDROID:
+        lower_bound = ANDROID_lower_bound
+        upper_bound = ANDROID_upper_bound
 
     # find the colors within the boundaries
     mask = cv2.inRange(hsv, lower_bound, upper_bound)
