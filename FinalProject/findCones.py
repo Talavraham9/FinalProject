@@ -4,15 +4,27 @@ import argparse
 import cv2
 import matplotlib.pyplot as plt
 
-RESIZE_VAL = 1
+RESIZE_VAL = 2
 path = "input/distance_android.jpeg"
 
-
+# ---------------------------------------------------------------------
+# function      : draw_rect
+# Description   : Gets a contour and draws on the picture rectangles according to the contours
+# ---------------------------------------------------------------------
 def draw_rect(contour):
     img_copy = np.copy(img)
+    height, width, channel = img.shape
     for c in contour:
         x, y, w, h = cv2.boundingRect(c)
         cv2.rectangle(img_copy, (x, y + h), (x + w, y), (255, 255, 255), 2)
+        if ( x > width // 2):
+            cv2.circle(img_copy, (x, y+h), radius=3, color=(0, 255,0 ), thickness=-1)
+        elif (x < width // 2):
+            cv2.circle(img_copy, (x+w, y+h), radius=3, color=(0, 255,0 ), thickness=-1)
+
+
+
+
     return img_copy
 
 # ----------------------------------------------------------
