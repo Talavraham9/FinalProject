@@ -22,15 +22,30 @@ ANDROID_upper_bound = np.array([180, 255, 255], np.uint8)
 def draw_rect(contour):
     img_copy = np.copy(img)
     height, width, channel = img.shape
+    leftPntArr = [[-50, height+50]] #Adds the starting point on the left
+    rightPntArr = []
     for c in contour:
         x, y, w, h = cv2.boundingRect(c)
         if ( x > width // 2):
             cv2.circle(img_copy, (x, y+h), radius=4, color=(0, 255,0 ), thickness=-1)
+            point =  [x, y+h]
+            rightPntArr.append(point)
         elif (x < width // 2):
             cv2.circle(img_copy, (x+w, y+h), radius=4, color=(0, 255,0 ), thickness=-1)
+            point = [x+w, y+h]
+            leftPntArr.append(point)
 
+    rightPntArr = rightPntArr[::-1] #Reverses the order of the points in the array
+    rightPntArr.append([width+50, height+50]) #Adds the starting point on the right
+    polygonPntArr = np.concatenate((leftPntArr,rightPntArr), axis=0) # Merges to one array
+    print (width, height)
 
+    print (polygonPntArr)
+    for i in range(len(polygonPntArr)):
+        print(polygonPntArr[i][0] / width, polygonPntArr[i][1] / height)
 
+    # Drew polygon
+    cv2.polylines(img_copy, [np.array([polygonPntArr], np.int32)], True, (255, 120, 255), 3)
 
     return img_copy
 
