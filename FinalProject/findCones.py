@@ -36,6 +36,7 @@ def draw_rect(contour):
             leftPntArr.append(point)
 
     rightPntArr = rightPntArr[::-1] #Reverses the order of the points in the array
+    rightPntArr.append([700, 1019]) #virtual cones
     rightPntArr.append([width+50, height+50]) #Adds the starting point on the right
     polygonPntArr = np.concatenate((leftPntArr,rightPntArr), axis=0) # Merges to one array
     print (width, height)
