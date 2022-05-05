@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Button,
-  Image,
-} from "react-native";
+import { StyleSheet, Text, View, Button, Image } from "react-native";
 import { Camera } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import react from "react";
+
+const check_connected = async () => {
+  try {
+    await fetch("http://192.168.1.235:5000/connect", {
+      timeout: 500,
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (json) {
+        let msg = json.data;
+        alert(msg);
+      });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const openCamera = ({ navigation }) => {
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
@@ -17,6 +26,7 @@ const openCamera = ({ navigation }) => {
   const [camera, setCamera] = useState(null);
   const [image, setImage] = useState(null);
   const [type, setType] = useState(Camera.Constants.Type.back);
+
   useEffect(() => {
     (async () => {
       const cameraStatus = await Camera.requestCameraPermissionsAsync();
@@ -25,10 +35,21 @@ const openCamera = ({ navigation }) => {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       setHasGalleryPermission(galleryStatus.status === "granted");
     })();
+    check_connected();
   }, []);
 
   const stopCamera = async () => {
     navigation.navigate("HomePage");
+  };
+
+  const yellow_button = async () => {
+    navigation.navigate("Yellow");
+  };
+  const orange_button = async () => {
+    navigation.navigate("Orange");
+  };
+  const red_button = async () => {
+    navigation.navigate("Red");
   };
 
   if (hasCameraPermission === null || hasGalleryPermission === false) {
@@ -37,28 +58,40 @@ const openCamera = ({ navigation }) => {
   if (hasCameraPermission === false || hasGalleryPermission === false) {
     return <Text>No access to camera</Text>;
   }
+
   return (
     <View style={styles.container}>
       <View style={styles.cameraContainer}>
         <Camera
-          ref={(ref) => setCamera(ref)}
+          // ref={(ref) => setCamera(ref)}
           style={styles.camera}
           type={type}
           ratio={"1:1"}
           useNativeZoom="true"
         />
-        {/* <View style={styles.red_circle} pointerEvents={"none"}>
-          <Text style={styles.text}> Danger!!!</Text>
-        </View>
-        <View style={styles.orange_circle} pointerEvents={"none"}>
-          <Text style={styles.text}> Warning !!!</Text>
-        </View>
-        <View style={styles.green_circle} pointerEvents={"none"}>
-          <Text style={styles.text}> All clear!!!</Text>
-        </View> */}
       </View>
       <View style={styles.button}>
         <Button title="Stop" color="#F8F6F4" onPress={() => stopCamera()} />
+        {image && <Image source={{ uri: image }} />}
+      </View>
+      <View style={styles.button}>
+        <Button
+          title="yellow"
+          color="#F8F6F4"
+          onPress={() => yellow_button()}
+        />
+        {image && <Image source={{ uri: image }} />}
+      </View>
+      <View style={styles.button}>
+        <Button
+          title="orange"
+          color="#F8F6F4"
+          onPress={() => orange_button()}
+        />
+        {image && <Image source={{ uri: image }} />}
+      </View>
+      <View style={styles.button}>
+        <Button title="red" color="#F8F6F4" onPress={() => red_button()} />
         {image && <Image source={{ uri: image }} />}
       </View>
     </View>
@@ -87,7 +120,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignSelf: "center",
     color: "#8fbc8f",
-    marginTop: -120,
     width: "50%",
     height: 60,
     justifyContent: "center",
