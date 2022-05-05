@@ -4,8 +4,8 @@ import { LinearGradient } from "expo-linear-gradient";
 
 // let obj_in_the_way = route.params;
 const orange_screen = ({ route, navigation }) => {
-  const obj_in_the_way = route.params.obj;
-  console.log(obj_in_the_way);
+  // const obj_in_the_way = route.params.obj;
+  // console.log(obj_in_the_way);
   return (
     <View style={styles.container}>
       <View style={styles.red_circle} pointerEvents={"none"}>
@@ -28,7 +28,7 @@ const orange_screen = ({ route, navigation }) => {
       </View>
 
       <View>
-        <Text style={styles.text}> {obj_in_the_way} ahead </Text>
+        {/* <Text style={styles.text}> {obj_in_the_way} ahead </Text> */}
       </View>
     </View>
   );

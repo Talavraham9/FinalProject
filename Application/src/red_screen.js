@@ -3,8 +3,8 @@ import { Button, Text, Image, View, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 const red_screen = ({ route, navigation }) => {
-  const obj_in_the_way = route.params.obj;
-  console.log(obj_in_the_way);
+  // const obj_in_the_way = route.params.obj;
+  // console.log(obj_in_the_way);
   return (
     <View style={styles.container}>
       <View style={styles.red_circle} pointerEvents={"none"}>
@@ -24,7 +24,7 @@ const red_screen = ({ route, navigation }) => {
       </View>
 
       <View>
-        <Text style={styles.text}> {obj_in_the_way} ahead </Text>
+        {/* <Text style={styles.text}> {obj_in_the_way} ahead </Text> */}
         {/* <Text style={styles.text}> 0.5 מטר לפניך </Text> */}
       </View>
     </View>

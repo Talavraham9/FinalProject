@@ -13,7 +13,6 @@ const check_connected = async () => {
       })
       .then(function (json) {
         let msg = json.data;
-        alert(msg);
       });
   } catch (error) {
     console.log(error);
@@ -26,16 +25,12 @@ const check_frame_response = async () => {
       timeout: 500,
     })
       .then(function (response) {
-        console.log(response);
-        let json = response.json();
-        console.log(json);
-        return json;
+        return response.json();
       })
       .then(function (json) {
         let sever = json.sever;
         let obj = json.obj;
-        alert(sever);
-        alert(obj);
+        return sever, obj;
       });
   } catch (error) {
     console.log(error);
@@ -95,7 +90,7 @@ const openCamera = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.cameraContainer}>
         <Camera
-          // ref={(ref) => setCamera(ref)}
+          ref={(ref) => setCamera(ref)}
           style={styles.camera}
           type={type}
           ratio={"1:1"}
