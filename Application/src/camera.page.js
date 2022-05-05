@@ -20,6 +20,30 @@ const check_connected = async () => {
   }
 };
 
+const check_frame_response = async () => {
+  try {
+    await fetch("http://192.168.1.235:5000/frame", {
+      timeout: 500,
+    })
+      .then(function (response) {
+        console.log(response);
+        let json = response.json();
+        console.log(json);
+        return json;
+      })
+      .then(function (json) {
+        let sever = json.sever;
+        let obj = json.obj;
+        alert(sever);
+        alert(obj);
+      });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const severity = 1;
+const object_to_send = "car";
 const openCamera = ({ navigation }) => {
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [hasGalleryPermission, setHasGalleryPermission] = useState(null);
@@ -36,8 +60,16 @@ const openCamera = ({ navigation }) => {
       setHasGalleryPermission(galleryStatus.status === "granted");
     })();
     check_connected();
+    check_frame_response();
   }, []);
 
+  // if (severity == 1) {
+  //   navigation.navigate("Yellow", { obj: object_to_send });
+  // } else if (severity == 2) {
+  //   navigation.navigate("Orange", { obj: object_to_send });
+  // } else if (severity == 3) {
+  //   navigation.navigate("Red", { obj: object_to_send });
+  // }
   const stopCamera = async () => {
     navigation.navigate("HomePage");
   };

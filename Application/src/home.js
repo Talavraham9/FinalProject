@@ -29,7 +29,7 @@ const Home = ({ navigation }) => {
             mode="contained"
             color="#F8F6F4"
             compact="true"
-            title="Start navigate"
+            title="התחל"
             onPress={() => navigation.navigate("Camera")}
           ></Button>
         </View>
