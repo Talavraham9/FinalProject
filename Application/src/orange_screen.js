@@ -28,7 +28,7 @@ const orange_screen = ({ route, navigation }) => {
       </View>
 
       <View>
-        {/* <Text style={styles.text}> {obj_in_the_way} ahead </Text> */}
+        <Text style={styles.text}> {obj_in_the_way} ahead </Text>
       </View>
     </View>
   );

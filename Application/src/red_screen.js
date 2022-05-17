@@ -24,7 +24,7 @@ const red_screen = ({ route, navigation }) => {
       </View>
 
       <View>
-        {/* <Text style={styles.text}> {obj_in_the_way} ahead </Text> */}
+        <Text style={styles.text}> {obj_in_the_way} ahead </Text>
         {/* <Text style={styles.text}> 0.5 מטר לפניך </Text> */}
       </View>
     </View>

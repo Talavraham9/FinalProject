@@ -1,8 +1,7 @@
 import flask
-from flask import Flask, json
+import PIL.Image
+from flask import Flask, json, request
 from markupsafe import escape
-from flask import jsonify
-
 
 app = Flask(__name__)
 
@@ -30,6 +29,17 @@ def frame_response():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+
+@app.route("/recieve_image",methods=["POST"])
+def post_img():
+    if request.method == "POST":
+        data = request.files.get("image")
+        img = PIL.Image.open(data)
+        img = img.rotate(270)
+        img.show()
+
+    response = flask.jsonify({'sever': "1", "obj": "car"})
+    return response
 
 if __name__=='__main__':
     app.run(host='192.168.1.235', port=5000)
