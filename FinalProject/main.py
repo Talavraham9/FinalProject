@@ -5,63 +5,65 @@ import cv2
 from shapely.geometry import Polygon
 from shapely import geometry
 
-#define
+# define
 IMAGE = True
 VIDEO = False
 CAMERA = False
 RED_COLOR = (0, 0, 255)
-ORANGE_COLOR = (0,165,255)
-YELLOW_COLOR = (51,255,255)
-#Points of the red, orange, yellow polygons
-redPoly = [[-0.05555555555555555, 1.03125],
-[0.2688888888888889, 0.636875],
-[0.7777777777777778, 0.636875],
-[1.0555555555555556, 1.03125]]
-orangePoly = [[0.2688888888888889, 0.636875],
-[0.37222222222222223, 0.483125],
-[0.6666666666666666, 0.483125],
-[0.7777777777777778, 0.636875]]
-yellowPoly =  [[0.37222222222222223, 0.483125],
-[0.4166666666666667, 0.42125],
-[0.5866666666666667, 0.421875],
-[0.6666666666666666, 0.483125]]
+ORANGE_COLOR = (0, 165, 255)
+YELLOW_COLOR = (51, 255, 255)
+# Points of the red, orange, yellow polygons
+redPoly = [[-0.16493055555555555, 1.048828125],
+           [0.1605902777777778, 0.70263671875],
+           [0.8472222222222222, 0.71044921875],
+           [1.1302083333333333, 1.0732421875]]
+orangePoly = [[0.1605902777777778 ,0.70263671875],
+              [0.3888888888888889 ,0.498046875],
+              [0.6796875, 0.49951171875],
+              [0.8472222222222222 ,0.71044921875]]
+yellowPoly = [[0.3888888888888889, 0.498046875],
+              [0.4626736111111111, 0.4287109375],
+              [0.6284722222222222, 0.4296875],
+              [0.6796875 ,0.49951171875]]
+
 
 # -------------------------------------------------------------------
 # function      : inPoly
 # Description   : return true/false if object in polygon
 # ---------------------------------------------------------------------
 def inPoly(x, y, w, h, img):
-    #Draw polygon on image
-    cv2.polylines(img, [np.array([redPoly], np.int32)], True,RED_COLOR, 9)
-    cv2.polylines(img, [np.array([orangePoly], np.int32)], True,ORANGE_COLOR, 9)
-    cv2.polylines(img, [np.array([yellowPoly], np.int32)], True,YELLOW_COLOR, 9)
+    # Draw polygon on image
+    cv2.polylines(img, [np.array([redPoly], np.int32)], True, RED_COLOR, 9)
+    cv2.polylines(img, [np.array([orangePoly], np.int32)], True, ORANGE_COLOR, 9)
+    cv2.polylines(img, [np.array([yellowPoly], np.int32)], True, YELLOW_COLOR, 9)
 
     # cv2.fillPoly(img, [np.array([redPoly], np.int32)],RED_COLOR)
     # cv2.fillPoly(img, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
     # cv2.fillPoly(img, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
 
-    #Creates a polygon of the identified object
+    # Creates a polygon of the identified object
     polygonDetect = Polygon([(x + w, y + h), (x, y + h), (x, y), (x + w, y)])
 
-    #Create a shapely Polygon from a list
+    # Create a shapely Polygon from a list
     polyRed = geometry.Polygon([[p[0], p[1]] for p in redPoly])
     polyOrange = geometry.Polygon([[p[0], p[1]] for p in orangePoly])
     polyYellow = geometry.Polygon([[p[0], p[1]] for p in yellowPoly])
 
-    if (polyRed.intersection(polygonDetect)): #Checks if object in red poly
+    if (polyRed.intersection(polygonDetect)):  # Checks if object in red poly
         print("The object is inside the RED polygon")
         return True
     else:
-        if (polyOrange.intersection(polygonDetect)):#Checks if object in orange poly
+        if (polyOrange.intersection(polygonDetect)):  # Checks if object in orange poly
             print("The object is inside the ORANGE polygon")
             return True
         else:
-            if (polyYellow.intersection(polygonDetect)):#Checks if object in yellow poly
+            if (polyYellow.intersection(polygonDetect)):  # Checks if object in yellow poly
                 print("The object is inside the YELLOW polygon")
                 return True
-            else: #The object is outside
-                print ("The object is outside the polygons")
+            else:  # The object is outside
+                print("The object is outside the polygons")
                 return False
+
 
 # -------------------------------------------------------------------
 # function      : detect
@@ -72,15 +74,15 @@ def detect(img):
     global doOnce
     height, width, _ = img.shape
     # Finds the polygon according to the proportion of the image
-    if doOnce==False:
-        doOnce=True
-        for i in range (len(redPoly)):
+    if doOnce == False:
+        doOnce = True
+        for i in range(len(redPoly)):
             redPoly[i][0] = redPoly[i][0] * width
             redPoly[i][1] = redPoly[i][1] * height
-        for i in range (len(orangePoly)):
+        for i in range(len(orangePoly)):
             orangePoly[i][0] = orangePoly[i][0] * width
             orangePoly[i][1] = orangePoly[i][1] * height
-        for i in range (len(yellowPoly)):
+        for i in range(len(yellowPoly)):
             yellowPoly[i][0] = yellowPoly[i][0] * width
             yellowPoly[i][1] = yellowPoly[i][1] * height
 
@@ -116,13 +118,12 @@ def detect(img):
     # ensure at least one detection exists
     for i in indexes.flatten():
         x, y, w, h = box[i]
-        if inPoly(x, y, w, h, img)==True:
+        if inPoly(x, y, w, h, img) == True:
             color = [int(c) for c in COLORS[class_ids[i]]]
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
             text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
             print("{} detect".format(LABELS[class_ids[i]]))
             cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
 
     return img
 
