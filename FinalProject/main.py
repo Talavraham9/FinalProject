@@ -1,9 +1,31 @@
 # import
 import os
+
+import PIL.Image
 import numpy as np
 import cv2
 from shapely.geometry import Polygon
 from shapely import geometry
+import flask
+from flask import Flask, json, request
+from markupsafe import escape
+
+app = Flask(__name__)
+
+@app.route("/recieve_image",methods=["POST"])
+def post_img():
+    if request.method == "POST":
+        data = request.files.get("image")
+        img = PIL.Image.open(data)
+        img = img.rotate(270)
+        opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        object, severity = detect(opencvImage)
+        img.show()
+
+    response = flask.jsonify({'sever': severity, "obj": object})
+    return response
+
+
 
 # define
 IMAGE = True
@@ -37,9 +59,9 @@ def inPoly(x, y, w, h, img):
     cv2.polylines(img, [np.array([orangePoly], np.int32)], True, ORANGE_COLOR, 9)
     cv2.polylines(img, [np.array([yellowPoly], np.int32)], True, YELLOW_COLOR, 9)
 
-    # cv2.fillPoly(img, [np.array([redPoly], np.int32)],RED_COLOR)
-    # cv2.fillPoly(img, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
-    # cv2.fillPoly(img, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
+    cv2.fillPoly(img, [np.array([redPoly], np.int32)],RED_COLOR)
+    cv2.fillPoly(img, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
+    cv2.fillPoly(img, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
 
     # Creates a polygon of the identified object
     polygonDetect = Polygon([(x + w, y + h), (x, y + h), (x, y), (x + w, y)])
@@ -51,18 +73,18 @@ def inPoly(x, y, w, h, img):
 
     if (polyRed.intersection(polygonDetect)):  # Checks if object in red poly
         print("The object is inside the RED polygon")
-        return True
+        return 3
     else:
         if (polyOrange.intersection(polygonDetect)):  # Checks if object in orange poly
             print("The object is inside the ORANGE polygon")
-            return True
+            return 2
         else:
             if (polyYellow.intersection(polygonDetect)):  # Checks if object in yellow poly
                 print("The object is inside the YELLOW polygon")
-                return True
+                return 1
             else:  # The object is outside
                 print("The object is outside the polygons")
-                return False
+                return 0
 
 
 # -------------------------------------------------------------------
@@ -115,30 +137,24 @@ def detect(img):
                 class_ids.append(class_id)
 
     indexes = np.array(cv2.dnn.NMSBoxes(box, confidences, 0.5, 0.4))
+    object ="NONE"
+    severity= 0
     # ensure at least one detection exists
     for i in indexes.flatten():
         x, y, w, h = box[i]
-        if inPoly(x, y, w, h, img) == True:
+        currSeverity=inPoly(x, y, w, h, img)
+        if currSeverity != 0 and currSeverity > severity:
+            severity = currSeverity
             color = [int(c) for c in COLORS[class_ids[i]]]
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
             text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
             print("{} detect".format(LABELS[class_ids[i]]))
+            object = LABELS[class_ids[i]]
             cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-    return img
-
-
-# # -------------------------------------------------------------------
-# function      : detectFromImage
-# Description   : Detection objects from an image
-# ---------------------------------------------------------------------
-def detectFromImage(input_path, output_path):
-    img = cv2.imread(input_path)  # open camera
-    img = detect(img)
-
-    # Saving the image
-    cv2.imwrite(output_path, img)
     cv2.imshow("output", img)  # show the output image
+
+    return object,severity
+
 
 
 # ---------------------------------------------------------------------
@@ -193,10 +209,12 @@ if __name__ == '__main__':
     COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")  # Colors of the objects
     doOnce = False
 
-    if IMAGE:
-        detectFromImage(input_image_path, output_image_path)
+    app.run(host='192.168.1.114', port=5000)
 
-    elif VIDEO or CAMERA:
-        detectFromVideo(input_video_path, output_video_path)
-
-    cv2.waitKey(0)  # Display the image infinitely until any keypress
+    # if IMAGE:
+    #     detect(input_image_path)
+    #
+    # elif VIDEO or CAMERA:
+    #     detectFromVideo(input_video_path)
+    #
+    # cv2.waitKey(0)  # Display the image infinitely until any keypress
