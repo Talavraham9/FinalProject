@@ -1,5 +1,7 @@
+import cv2
 import flask
 import PIL.Image
+import numpy
 from flask import Flask, json, request
 from markupsafe import escape
 
@@ -36,10 +38,15 @@ def post_img():
         data = request.files.get("image")
         img = PIL.Image.open(data)
         img = img.rotate(270)
-        img.show()
+        opencvImage = cv2.cvtColor(numpy.array(img), cv2.COLOR_RGB2BGR)
+        #
+        # cv2.imshow("img",img)
+        # cv2.waitKey(0)
 
-    response = flask.jsonify({'sever': "1", "obj": "car"})
+        # img.show()
+
+    response = flask.jsonify({'sever': "2", "obj": "car"})
     return response
 
 if __name__=='__main__':
-    app.run(host='192.168.1.235', port=5000)
+    app.run(host='192.168.1.101', port=5000)
