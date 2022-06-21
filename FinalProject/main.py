@@ -1,30 +1,28 @@
-# import
 import os
-
 import PIL.Image
 import numpy as np
 import cv2
 from shapely.geometry import Polygon
 from shapely import geometry
 import flask
-from flask import Flask, json, request
-from markupsafe import escape
+from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route("/recieve_image",methods=["POST"])
+
+@app.route("/recieve_image", methods=["POST"])
 def post_img():
     if request.method == "POST":
+        print("data coming")
         data = request.files.get("image")
         img = PIL.Image.open(data)
         img = img.rotate(270)
         opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         object, severity = detect(opencvImage)
-        img.show()
+        # img.show()
 
     response = flask.jsonify({'sever': severity, "obj": object})
     return response
-
 
 
 # define
@@ -35,18 +33,19 @@ RED_COLOR = (0, 0, 255)
 ORANGE_COLOR = (0, 165, 255)
 YELLOW_COLOR = (51, 255, 255)
 # Points of the red, orange, yellow polygons
-redPoly = [[-0.16493055555555555, 1.048828125],
-           [0.1605902777777778, 0.70263671875],
-           [0.8472222222222222, 0.71044921875],
-           [1.1302083333333333, 1.0732421875]]
-orangePoly = [[0.1605902777777778 ,0.70263671875],
-              [0.3888888888888889 ,0.498046875],
-              [0.6796875, 0.49951171875],
-              [0.8472222222222222 ,0.71044921875]]
-yellowPoly = [[0.3888888888888889, 0.498046875],
-              [0.4626736111111111, 0.4287109375],
-              [0.6284722222222222, 0.4296875],
-              [0.6796875 ,0.49951171875]]
+redPoly = [[-0.165, 1.049],
+           [0.1606, 0.703],
+           [0.85, 0.72],
+           [1.14, 1.08]]
+orangePoly = [[0.161 ,0.703],
+              [0.39 ,0.5],
+              [0.68, 0.5],
+              [0.85 ,0.72]]
+yellowPoly = [[0.39, 0.5],
+              [0.5, 0.43],
+              [0.63, 0.43],
+              [0.68 ,0.5]]
+
 
 
 # -------------------------------------------------------------------
@@ -54,15 +53,6 @@ yellowPoly = [[0.3888888888888889, 0.498046875],
 # Description   : return true/false if object in polygon
 # ---------------------------------------------------------------------
 def inPoly(x, y, w, h, img):
-    # Draw polygon on image
-    cv2.polylines(img, [np.array([redPoly], np.int32)], True, RED_COLOR, 9)
-    cv2.polylines(img, [np.array([orangePoly], np.int32)], True, ORANGE_COLOR, 9)
-    cv2.polylines(img, [np.array([yellowPoly], np.int32)], True, YELLOW_COLOR, 9)
-
-    cv2.fillPoly(img, [np.array([redPoly], np.int32)],RED_COLOR)
-    cv2.fillPoly(img, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
-    cv2.fillPoly(img, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
-
     # Creates a polygon of the identified object
     polygonDetect = Polygon([(x + w, y + h), (x, y + h), (x, y), (x + w, y)])
 
@@ -93,11 +83,14 @@ def inPoly(x, y, w, h, img):
 #                 with rectangles on the objects
 # ---------------------------------------------------------------------
 def detect(img):
+    # cv2.imshow("before", img)
+
     global doOnce
     height, width, _ = img.shape
-    # Finds the polygon according to the proportion of the image
+
     if doOnce == False:
         doOnce = True
+        print("change polygon rez ",width ," X " , height )
         for i in range(len(redPoly)):
             redPoly[i][0] = redPoly[i][0] * width
             redPoly[i][1] = redPoly[i][1] * height
@@ -107,6 +100,17 @@ def detect(img):
         for i in range(len(yellowPoly)):
             yellowPoly[i][0] = yellowPoly[i][0] * width
             yellowPoly[i][1] = yellowPoly[i][1] * height
+    # # # resize image
+    # resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    # Finds the polygon according to the proportion of the image
+    # resized = img.copy()
+    # cv2.polylines(resized, [np.array([redPoly], np.int32)], True, RED_COLOR, 9)
+    # cv2.polylines(resized, [np.array([orangePoly], np.int32)], True, ORANGE_COLOR, 9)
+    # cv2.polylines(resized, [np.array([yellowPoly], np.int32)], True, YELLOW_COLOR, 9)
+    # cv2.fillPoly(resized, [np.array([redPoly], np.int32)], RED_COLOR)
+    # cv2.fillPoly(resized, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
+    # cv2.fillPoly(resized, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
+
 
     blob = cv2.dnn.blobFromImage(img, 1 / 255, (416, 416), (0, 0, 0), swapRB=True, crop=False)
     net.setInput(blob)
@@ -137,24 +141,31 @@ def detect(img):
                 class_ids.append(class_id)
 
     indexes = np.array(cv2.dnn.NMSBoxes(box, confidences, 0.5, 0.4))
-    object ="NONE"
-    severity= 0
+    object = "NONE"
+    severity = 0
     # ensure at least one detection exists
     for i in indexes.flatten():
         x, y, w, h = box[i]
-        currSeverity=inPoly(x, y, w, h, img)
+        currSeverity = inPoly(x, y, w, h, img)
+
+
+        color = [int(c) for c in COLORS[class_ids[i]]]
+        cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         if currSeverity != 0 and currSeverity > severity:
             severity = currSeverity
-            color = [int(c) for c in COLORS[class_ids[i]]]
-            cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-            text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
+            # color = [int(c) for c in COLORS[class_ids[i]]]
+            # cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
+            # text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
             print("{} detect".format(LABELS[class_ids[i]]))
             object = LABELS[class_ids[i]]
-            cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-    cv2.imshow("output", img)  # show the output image
+            # cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    # cv2.imshow("output", img)  # show the output image
+    # cv2.imshow("img", img)
+    #
+    # cv2.imshow("image", resized)
+    # cv2.waitKey()
 
-    return object,severity
-
+    return object, severity
 
 
 # ---------------------------------------------------------------------
@@ -176,8 +187,8 @@ def detectFromVideo(input_video_path, output_video_path):
             img = detect(img)
         else:
             exit(1)
-        cv2.imshow("output", img)  # show the output image
-        writer.write(img)  # save output
+        # cv2.imshow("output", img)  # show the output image
+        # writer.write(img)  # save output
 
         if cv2.waitKey(1) & 0xff == ord("q"):
             break
@@ -200,8 +211,8 @@ if __name__ == '__main__':
 
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     LABELS_FILE = 'C:/darknet-master/data/coco.names'
-    CONFIG_FILE = 'C:/darknet-master/cfg/yolov3-tiny_obj.cfg'
-    WEIGHTS_FILE = 'EnvFiles/yolov3-tiny.weights'
+    CONFIG_FILE = 'C:/darknet-master/cfg/yolov3.cfg'
+    WEIGHTS_FILE = 'EnvFiles/yolov3.weights'
     net = cv2.dnn.readNetFromDarknet(CONFIG_FILE, WEIGHTS_FILE)
     CONFIDENCE_THRESHOLD = 0.5
     LABELS = open(LABELS_FILE).read().strip().split("\n")
@@ -209,7 +220,7 @@ if __name__ == '__main__':
     COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")  # Colors of the objects
     doOnce = False
 
-    app.run(host='192.168.1.114', port=5000)
+    app.run(host='192.168.1.104', port=5000)
 
     # if IMAGE:
     #     detect(input_image_path)
