@@ -19,7 +19,6 @@ def post_img():
         img = img.rotate(270)
         opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         object, severity = detect(opencvImage)
-        # img.show()
 
     response = flask.jsonify({'sever': severity, "obj": object})
     return response
@@ -37,22 +36,21 @@ redPoly = [[-0.165, 1.049],
            [0.1606, 0.703],
            [0.85, 0.72],
            [1.14, 1.08]]
-orangePoly = [[0.161 ,0.703],
-              [0.39 ,0.5],
+orangePoly = [[0.161, 0.703],
+              [0.39, 0.5],
               [0.68, 0.5],
-              [0.85 ,0.72]]
+              [0.85, 0.72]]
 yellowPoly = [[0.39, 0.5],
               [0.5, 0.43],
               [0.63, 0.43],
-              [0.68 ,0.5]]
-
+              [0.68, 0.5]]
 
 
 # -------------------------------------------------------------------
 # function      : inPoly
 # Description   : return true/false if object in polygon
 # ---------------------------------------------------------------------
-def inPoly(x, y, w, h, img):
+def inPoly(x, y, w, h):
     # Creates a polygon of the identified object
     polygonDetect = Polygon([(x + w, y + h), (x, y + h), (x, y), (x + w, y)])
 
@@ -90,7 +88,7 @@ def detect(img):
 
     if doOnce == False:
         doOnce = True
-        print("change polygon rez ",width ," X " , height )
+        print("change polygon rez ", width, " X ", height)
         for i in range(len(redPoly)):
             redPoly[i][0] = redPoly[i][0] * width
             redPoly[i][1] = redPoly[i][1] * height
@@ -100,17 +98,6 @@ def detect(img):
         for i in range(len(yellowPoly)):
             yellowPoly[i][0] = yellowPoly[i][0] * width
             yellowPoly[i][1] = yellowPoly[i][1] * height
-    # # # resize image
-    # resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-    # Finds the polygon according to the proportion of the image
-    # resized = img.copy()
-    # cv2.polylines(resized, [np.array([redPoly], np.int32)], True, RED_COLOR, 9)
-    # cv2.polylines(resized, [np.array([orangePoly], np.int32)], True, ORANGE_COLOR, 9)
-    # cv2.polylines(resized, [np.array([yellowPoly], np.int32)], True, YELLOW_COLOR, 9)
-    # cv2.fillPoly(resized, [np.array([redPoly], np.int32)], RED_COLOR)
-    # cv2.fillPoly(resized, [np.array([orangePoly], np.int32)], ORANGE_COLOR)
-    # cv2.fillPoly(resized, [np.array([yellowPoly], np.int32)], YELLOW_COLOR)
-
 
     blob = cv2.dnn.blobFromImage(img, 1 / 255, (416, 416), (0, 0, 0), swapRB=True, crop=False)
     net.setInput(blob)
@@ -146,24 +133,14 @@ def detect(img):
     # ensure at least one detection exists
     for i in indexes.flatten():
         x, y, w, h = box[i]
-        currSeverity = inPoly(x, y, w, h, img)
-
+        currSeverity = inPoly(x, y, w, h)
 
         color = [int(c) for c in COLORS[class_ids[i]]]
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
         if currSeverity != 0 and currSeverity > severity:
             severity = currSeverity
-            # color = [int(c) for c in COLORS[class_ids[i]]]
-            # cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-            # text = "{}: {:.2f}".format(LABELS[class_ids[i]], confidences[i])
             print("{} detect".format(LABELS[class_ids[i]]))
             object = LABELS[class_ids[i]]
-            # cv2.putText(img, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-    # cv2.imshow("output", img)  # show the output image
-    # cv2.imshow("img", img)
-    #
-    # cv2.imshow("image", resized)
-    # cv2.waitKey()
 
     return object, severity
 
@@ -187,8 +164,6 @@ def detectFromVideo(input_video_path, output_video_path):
             img = detect(img)
         else:
             exit(1)
-        # cv2.imshow("output", img)  # show the output image
-        # writer.write(img)  # save output
 
         if cv2.waitKey(1) & 0xff == ord("q"):
             break
@@ -204,11 +179,6 @@ def detectFromVideo(input_video_path, output_video_path):
 # MAIN
 # ----------------------------------------------------------
 if __name__ == '__main__':
-    input_image_path = "input/car.jpeg"
-    output_image_path = "output/out.jpg"
-    input_video_path = "input/car3.mp4"
-    output_video_path = 'output/videoOutputTiny.mp4'
-
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     LABELS_FILE = 'C:/darknet-master/data/coco.names'
     CONFIG_FILE = 'C:/darknet-master/cfg/yolov3.cfg'
@@ -221,11 +191,3 @@ if __name__ == '__main__':
     doOnce = False
 
     app.run(host='192.168.1.104', port=5000)
-
-    # if IMAGE:
-    #     detect(input_image_path)
-    #
-    # elif VIDEO or CAMERA:
-    #     detectFromVideo(input_video_path)
-    #
-    # cv2.waitKey(0)  # Display the image infinitely until any keypress
