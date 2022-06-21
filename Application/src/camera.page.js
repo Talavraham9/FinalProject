@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, Image } from "react-native";
 import { Camera } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImageManipulator from "expo-image-manipulator";
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let sever;
-const openCamera = ({ navigation }) => {
+const OpenCamera = ({ navigation }) => {
   let [obj, setObj] = useState(null);
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [camera, setCamera] = useState(null);
@@ -13,8 +14,6 @@ const openCamera = ({ navigation }) => {
   const [showYellowAlert, setshowYellowAlert] = React.useState(false);
   const [showOrangeAlert, setshowOrangeAlert] = React.useState(false);
   const [showRedAlert, setRedAlert] = React.useState(false);
-
-  const HALF_SEC = 1000;
 
   useEffect(() => {
     // ask for permissions from the camera
@@ -25,27 +24,27 @@ const openCamera = ({ navigation }) => {
     })();
   }, []);
 
-  // useEffect(() => {
-  // activate the function every half second
-  //   const interval = setInterval(() => {
-  //     takePicture();
-  //   }, HALF_SEC);
-
-  //   return () => clearInterval(interval); // This represents the unmount function, in which you need to clear your interval to prevent memory leaks.
-  // }, []);
-
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   const takePicture = async () => {
     // this function take a picture from the camera and move to a callback function with the frame received.
     let options = {
-      quality: 0.5,
+      quality: 1,
+      skipProcessing: true,
       base64: true,
+      exif: true,
       forceUpOrientation: true,
-      fixOrientation: true,
+      fixOrientation: false,
     };
-    const img = await camera.takePictureAsync(options);
-    onPictureSaved(img);
+    if (hasCameraPermission === true) {
+      let img = await camera.takePictureAsync(options);
+      img = await ImageManipulator.manipulateAsync(
+        img.uri,
+        [{ rotate: 270 }, { resize: { width: 512, height: 512 } }],
+        { compress: 0, format: "jpeg", base64: false }
+      );
+      onPictureSaved(img);
+    }
   };
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,8 +63,8 @@ const openCamera = ({ navigation }) => {
       });
       body.append("Content-Type", "image/jpg");
 
-      console.log(body);
-      await fetch("http://192.168.1.101:5000/recieve_image", {
+      // console.log(body);
+      await fetch("http://192.168.1.104:5000/recieve_image", {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -73,16 +72,14 @@ const openCamera = ({ navigation }) => {
         body: body,
       })
         .then((resp) => {
-          // console.log(resp);
           resp.json().then((data) => {
-            console.log(data);
             sever = data.sever;
             obj = data.obj;
             analyze_res(sever, obj);
           });
         })
         .catch(function (err) {
-          console.log("error while sending data" + err.msg);
+          console.log("error while sending data " + err.msg);
         });
     };
 
@@ -93,6 +90,7 @@ const openCamera = ({ navigation }) => {
 
   const analyze_res = (sever, obj_res) => {
     // this function receives 2 variables, and decide which color of alert will be shown and the object that will be wrriten
+    console.log(sever, obj_res);
     if (sever == 0) {
       setshowYellowAlert(false);
       setshowOrangeAlert(false);
@@ -100,14 +98,21 @@ const openCamera = ({ navigation }) => {
       setObj(null);
     } else if (sever == 1) {
       setshowYellowAlert(true);
+      setshowOrangeAlert(false);
+      setRedAlert(false);
       setObj(obj_res);
     } else if (sever == 2) {
       setshowOrangeAlert(true);
+      setshowYellowAlert(false);
+      setRedAlert(false);
       setObj(obj_res);
     } else if (sever == 3) {
+      setshowYellowAlert(false);
+      setshowOrangeAlert(false);
       setRedAlert(true);
       setObj(obj_res);
     }
+    takePicture();
   };
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -194,13 +199,12 @@ const styles = StyleSheet.create({
     backgroundColor: "whitesmoke",
     flexDirection: "column",
     alignItems: "center",
-    width: "100%",
-    height: "100%",
   },
   camera: {
     flex: 1,
     width: 414,
-    // aspectRatio: 0.333,
+
+    aspectRatio: 1,
   },
   button: {
     marginBottom: 20,
@@ -264,4 +268,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default openCamera;
+export default OpenCamera;
