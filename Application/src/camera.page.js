@@ -17,16 +17,25 @@ const OpenCamera = ({ navigation }) => {
 
   useEffect(() => {
     // ask for permissions from the camera
-    (async () => {
-      const cameraStatus = await Camera.requestCameraPermissionsAsync();
-      setHasCameraPermission(cameraStatus.status === "granted");
-      takePicture();
-    })();
+    permisionFunction();
+    takePicture();
   }, []);
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+  const permisionFunction = async () => {
+    // here is how to get the camera permission
+    const cameraPermission = await Camera.requestCameraPermissionsAsync();
+    setHasCameraPermission(cameraPermission.status === "granted");
+    if (cameraPermission.status !== "granted") {
+      alert("Permission for media access needed.");
+    }
+  };
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   const takePicture = async () => {
+    console.log("take picture function");
     // this function take a picture from the camera and move to a callback function with the frame received.
     let options = {
       quality: 1,
@@ -40,7 +49,7 @@ const OpenCamera = ({ navigation }) => {
       let img = await camera.takePictureAsync(options);
       img = await ImageManipulator.manipulateAsync(
         img.uri,
-        [{ rotate: 270 }, { resize: { width: 512, height: 512 } }],
+        [{ resize: { width: 640, height: 480 } }],
         { compress: 0, format: "jpeg", base64: false }
       );
       onPictureSaved(img);
@@ -63,8 +72,7 @@ const OpenCamera = ({ navigation }) => {
       });
       body.append("Content-Type", "image/jpg");
 
-      // console.log(body);
-      await fetch("http://192.168.1.104:5000/recieve_image", {
+      await fetch("https://finalprojectwheelapp.herokuapp.com/img", {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -72,6 +80,7 @@ const OpenCamera = ({ navigation }) => {
         body: body,
       })
         .then((resp) => {
+          // console.log(resp);
           resp.json().then((data) => {
             sever = data.sever;
             obj = data.obj;
@@ -90,23 +99,26 @@ const OpenCamera = ({ navigation }) => {
 
   const analyze_res = (sever, obj_res) => {
     // this function receives 2 variables, and decide which color of alert will be shown and the object that will be wrriten
-    console.log(sever, obj_res);
     if (sever == 0) {
+      // no alert
       setshowYellowAlert(false);
       setshowOrangeAlert(false);
       setRedAlert(false);
       setObj(null);
     } else if (sever == 1) {
+      // red alert
       setshowYellowAlert(true);
       setshowOrangeAlert(false);
       setRedAlert(false);
       setObj(obj_res);
     } else if (sever == 2) {
+      // orange alert
       setshowOrangeAlert(true);
       setshowYellowAlert(false);
       setRedAlert(false);
       setObj(obj_res);
     } else if (sever == 3) {
+      // yellow alert
       setshowYellowAlert(false);
       setshowOrangeAlert(false);
       setRedAlert(true);
@@ -178,6 +190,7 @@ const OpenCamera = ({ navigation }) => {
         style={styles.camera}
         type={type}
         zoom={0}
+
         // aspect={Camera.constants.Aspect.fill}
       />
       <View style={styles.alert_div}>
